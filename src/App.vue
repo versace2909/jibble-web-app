@@ -84,9 +84,7 @@ import {
   SaveOutlined,
   StopOutlined,
 } from "@ant-design/icons-vue";
-import { API_URL } from "./commons/api";
-
-const UPDATE_EMPLOYEE_URL = `${API_URL}Employee`;
+import { API_URL, UPDATE_EMPLOYEE_URL } from "./commons/api";
 
 const columns = [
   {

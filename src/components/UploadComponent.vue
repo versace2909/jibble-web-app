@@ -30,7 +30,7 @@
 import { InboxOutlined } from "@ant-design/icons-vue";
 import { defineComponent, ref } from "@vue/runtime-core";
 import { message, Upload } from "ant-design-vue";
-import { API_URL } from "@/commons/api";
+import { UPLOAD_URL } from "@/commons/api";
 
 export default defineComponent({
   components: {
@@ -38,7 +38,6 @@ export default defineComponent({
   },
   emits: ["upload-success"],
   setup(props, { emit }) {
-    const UPLOAD_URL = `${API_URL}Employee`;
 
     const handleChange = ({ file }) => {
       if (file.status === "done") {
