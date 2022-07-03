@@ -1,13 +1,15 @@
 <template>
-  <UploadComponent @upload-success="reload"/>
-  <a-table
-    :row-key="(record) => record.empId"
-    :columns="columns"
-    :data-source="dataSource && dataSource.items"
-    :pagination="pagination"
-    :loading="loading"
-    @change="handleTableChange"
-  ></a-table>
+  <a-layout class="layout" style="padding: 0 24px; background: #fff">
+    <UploadComponent @upload-success="reload" />
+    <a-table
+      :row-key="(record) => record.empId"
+      :columns="columns"
+      :data-source="dataSource && dataSource.items"
+      :pagination="pagination"
+      :loading="loading"
+      @change="handleTableChange"
+    ></a-table>
+  </a-layout>
 </template>
 
 <script>
@@ -71,7 +73,7 @@ export default defineComponent({
     });
 
     const pagination = computed(() => ({
-      total: totalPage.value,
+      total: totalPage.value * pageSize.value,
       pageIndex: current.value,
       pageSize: pageSize.value,
     }));

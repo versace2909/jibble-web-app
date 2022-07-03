@@ -1,23 +1,30 @@
 <template>
-  <a-upload-dragger
-    v-model:fileList="fileList"
-    name="file"
-    :multiple="false"
-    action="https://localhost:5001/api/Employee"
-    :before-upload="beforeUpload"
-    @change="handleChange"
-    @drop="handleDrop"
-    style="marginbottom: 10px"
-  >
-    <p class="ant-upload-drag-icon">
-      <inbox-outlined></inbox-outlined>
-    </p>
-    <p class="ant-upload-text">Click or drag file to this area to upload</p>
-    <p class="ant-u¡pload-hint">
-      Support for a single or bulk upload. Strictly prohibit from uploading
-      company data or other band files
-    </p>
-  </a-upload-dragger>
+  <a-layout style="marginBottom: 25px">
+    <a-row>
+      <a-col :span="12" :offset="6">
+        <a-upload-dragger
+          v-model:fileList="fileList"
+          name="file"
+          :multiple="false"
+          action="https://localhost:5001/api/Employee"
+          :before-upload="beforeUpload"
+          @change="handleChange"
+          @drop="handleDrop"
+        >
+          <p class="ant-upload-drag-icon">
+            <inbox-outlined></inbox-outlined>
+          </p>
+          <p class="ant-upload-text">
+            Click or drag file to this area to upload
+          </p>
+          <p class="ant-u¡pload-hint">
+            Support for a single or bulk upload. Strictly prohibit from
+            uploading company data or other band files
+          </p>
+        </a-upload-dragger>
+      </a-col>
+    </a-row>
+  </a-layout>
 </template>
 <script>
 import { InboxOutlined } from "@ant-design/icons-vue";
