@@ -1,12 +1,12 @@
 <template>
-  <a-layout style="marginBottom: 25px">
+  <a-layout style="marginbottom: 25px">
     <a-row>
       <a-col :span="12" :offset="6">
         <a-upload-dragger
           v-model:fileList="fileList"
           name="file"
           :multiple="false"
-          action="https://localhost:5001/api/Employee"
+          :action="UPLOAD_URL"
           :before-upload="beforeUpload"
           @change="handleChange"
           @drop="handleDrop"
@@ -30,6 +30,7 @@
 import { InboxOutlined } from "@ant-design/icons-vue";
 import { defineComponent, ref } from "@vue/runtime-core";
 import { message, Upload } from "ant-design-vue";
+import { API_URL } from "@/commons/api";
 
 export default defineComponent({
   components: {
@@ -37,6 +38,8 @@ export default defineComponent({
   },
   emits: ["upload-success"],
   setup(props, { emit }) {
+    const UPLOAD_URL = `${API_URL}Employee`;
+
     const handleChange = ({ file }) => {
       if (file.status === "done") {
         emit("upload-success");
@@ -65,6 +68,7 @@ export default defineComponent({
       fileList: ref([]),
       handleChange,
       beforeUpload,
+      UPLOAD_URL,
     };
   },
 });

@@ -2,20 +2,92 @@
   <a-layout class="layout" style="padding: 0 24px; background: #fff">
     <UploadComponent @upload-success="reload" />
     <a-table
-      :row-key="(record) => record.empId"
+      :row-key="(record) => record.id"
       :columns="columns"
       :data-source="dataSource && dataSource.items"
       :pagination="pagination"
       :loading="loading"
       @change="handleTableChange"
-    ></a-table>
+    >
+      <template #bodyCell="{ column, text, record }">
+        <template
+          v-if="['empId', 'firstName', 'lastName'].includes(column.dataIndex)"
+        >
+          <div>
+            <a-input
+              v-if="editableData[record.id]"
+              v-model:value="editableData[record.id][column.dataIndex]"
+              style="margin: -5px 0"
+            />
+            <template v-else>
+              {{ text }}
+            </template>
+          </div>
+        </template>
+        <template v-else-if="column.dataIndex === 'dateOfBirthFormatted'">
+          <div>
+            <a-date-picker
+              v-if="editableData[record.id]"
+              v-model:value="editableData[record.id]['dateOfBirth']"
+              format="DD MMM YYYY"
+            />
+            <!-- <a-input
+              v-if="editableData[record.id]"
+              v-model:value="editableData[record.id][column.dataIndex]"
+              style="margin: -5px 0"
+            /> -->
+            <template v-else>
+              {{ text }}
+            </template>
+          </div>
+        </template>
+        <template v-else-if="column.dataIndex === 'operation'">
+          <div class="editable-row-operations">
+            <a-space v-if="editableData[record.id]">
+              <a-button type="primary" @click="save(record.id)">
+                <template #icon><SaveOutlined /></template>
+                Save</a-button
+              >
+              <a-popconfirm
+                title="Sure to cancel?"
+                @confirm="cancel(record.id)"
+              >
+                <a-button type="secondary">
+                  <template #icon><StopOutlined /></template>
+                  Cancel</a-button
+                >
+              </a-popconfirm>
+            </a-space>
+            <a-space v-else>
+              <a-button @click="edit(record.id)">
+                <template #icon><EditOutlined /></template>
+                Edit
+              </a-button>
+            </a-space>
+          </div>
+        </template>
+      </template>
+    </a-table>
   </a-layout>
 </template>
 
 <script>
-import { computed, defineComponent } from "@vue/runtime-core";
+import { cloneDeep } from "lodash-es";
+import { computed, reactive, defineComponent, ref } from "@vue/runtime-core";
 import { usePagination } from "vue-request";
+import { message } from "ant-design-vue";
+import moment from "moment";
+import dayjs from "dayjs";
 import UploadComponent from "./components/UploadComponent.vue";
+import {
+  EditOutlined,
+  SaveOutlined,
+  StopOutlined,
+} from "@ant-design/icons-vue";
+import { API_URL } from "./commons/api";
+
+const UPDATE_EMPLOYEE_URL = `${API_URL}Employee`;
+
 const columns = [
   {
     title: "Employee Id",
@@ -34,14 +106,18 @@ const columns = [
   },
   {
     title: "Date Of Birth",
-    dataIndex: "doB",
-    key: "doB",
+    dataIndex: "dateOfBirthFormatted",
+    key: "dateOfBirthFormatted",
+  },
+  {
+    title: "operation",
+    dataIndex: "operation",
   },
 ];
 
 const queryData = async ({ pageIndex, pageSize }) => {
   let result = await fetch(
-    `https://localhost:5001/api/Employee?PageIndex=${pageIndex}&PageSize=${pageSize}`
+    `${API_URL}Employee?PageIndex=${pageIndex}&PageSize=${pageSize}`
   );
   let data = await result.json();
   return data;
@@ -49,28 +125,36 @@ const queryData = async ({ pageIndex, pageSize }) => {
 
 export default defineComponent({
   components: {
+    EditOutlined,
+    SaveOutlined,
+    StopOutlined,
     UploadComponent,
   },
   setup() {
-    const {
-      data: dataSource,
-      run,
-      loading,
-      current,
-      pageSize,
-      totalPage,
-    } = usePagination(queryData, {
-      formatResult: (res) => {
-        return {
-          total: res.total,
-          items: res.results,
-        };
-      },
-      pagination: {
-        currentKey: "pageIndex",
-        pageSizeKey: "pageSize",
-      },
-    });
+    const { data, run, loading, current, pageSize, totalPage } = usePagination(
+      queryData,
+      {
+        formatResult: (res) => {
+          res.results.forEach((item) => {
+            item.dateOfBirthFormatted = item.dateOfBirth
+              ? moment(item.dateOfBirth).format("DD MMM YYYY")
+              : "";
+            item.dateOfBirth = dayjs(item.dateOfBirth);
+          });
+
+          return {
+            total: res.total,
+            items: res.results,
+          };
+        },
+        pagination: {
+          currentKey: "pageIndex",
+          pageSizeKey: "pageSize",
+        },
+      }
+    );
+
+    const dataSource = ref(data);
 
     const pagination = computed(() => ({
       total: totalPage.value * pageSize.value,
@@ -88,8 +172,44 @@ export default defineComponent({
     const reload = () => {
       run({
         pageIndex: 1,
-        pageSize: 10,
+        pageSize: pageSize.value,
       });
+    };
+
+    const editableData = reactive({});
+
+    const edit = (key) => {
+      editableData[key] = cloneDeep(
+        dataSource.value.items.filter((item) => key === item.id)[0]
+      );
+    };
+
+    const save = (key) => {
+      const newObject = editableData[key];
+      fetch(UPDATE_EMPLOYEE_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newObject),
+      })
+        .then((res) => res.json())
+        .then(({ success }) => {
+          if (success) {
+            message.success("Employee updated successfully");
+            Object.assign(
+              dataSource.value.items.filter((item) => key === item.id)[0],
+              newObject
+            );
+            delete editableData[key];
+          } else {
+            message.error("Employee update failed");
+          }
+        });
+    };
+
+    const cancel = (key) => {
+      delete editableData[key];
     };
 
     return {
@@ -99,6 +219,10 @@ export default defineComponent({
       pagination,
       reload,
       handleTableChange,
+      editableData,
+      edit,
+      save,
+      cancel,
     };
   },
 });
